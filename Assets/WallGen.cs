@@ -2,9 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class wall_gen : MonoBehaviour
+public class WallGen : MonoBehaviour
 {
-    public GameObject brick_prefab;
+    public GameObject brickPrefab;
     public float radius;
     public int count;
     public int wallHeight;
@@ -23,7 +23,9 @@ public class wall_gen : MonoBehaviour
             pos.y = h*brickHeight;
             pos.z = radius * Mathf.Sin(theta);
 
-            Object.Instantiate(brick_prefab,pos,Quaternion.Euler(new Vector3(0, deg, 0)));
+            Quaternion rot = Quaternion.Euler(new Vector3(0, deg, 0));
+
+            Object.Instantiate(brickPrefab, pos, rot, transform);
         }
 
     }
