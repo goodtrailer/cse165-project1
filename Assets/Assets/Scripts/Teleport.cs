@@ -3,6 +3,7 @@ using UnityEngine;
 public class Teleport : MonoBehaviour
 {
     public GameObject parent;
+    public GameObject destinationPrefab;
 
     public OVRInput.Button button;
     public OVRInput.Controller controller;
@@ -12,9 +13,16 @@ public class Teleport : MonoBehaviour
     private bool isActive = false;
     private bool isValid = false;
 
+    private GameObject destination;
+
     private void Awake()
     {
         rayVisual = transform.GetComponent<RayVisual>();
+    }
+
+    private void Start()
+    {
+        destination = Instantiate(destinationPrefab);
     }
 
     void Update()
@@ -30,6 +38,7 @@ public class Teleport : MonoBehaviour
         {
             isActive = false;
             rayVisual.IsShowing = false;
+            destination.SetActive(false);
 
             if (isValid)
                 parent.transform.position = rayVisual.End;
@@ -41,11 +50,14 @@ public class Teleport : MonoBehaviour
             {
                 isValid = false;
                 rayVisual.Color = Color.red;
+                destination.SetActive(false);
             }
             else
             {
                 isValid = true;
                 rayVisual.Color = Color.green;
+                destination.SetActive(true);
+                destination.transform.position = rayVisual.End;
             }
         }
     }

@@ -234,8 +234,9 @@ GameObject:
   - component: {fileID: 612512656}
   - component: {fileID: 612512655}
   - component: {fileID: 612512657}
+  - component: {fileID: 612512658}
   m_Layer: 0
-  m_Name: RayVisual
+  m_Name: Controls
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -386,8 +387,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   parent: {fileID: 1504306952}
+  destinationPrefab: {fileID: 7301771364205282026, guid: 0004ab8bd80d4fc48a277f0874b99f8a, type: 3}
   button: 1
   controller: 2
+--- !u!114 &612512658
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 612512653}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ff47308a60d2a4c44b418114a9416848, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  controller: 2
+  locationPrefab: {fileID: 7301771364205282026, guid: ca16db6dfa4c95945b0944fb988ccbe3, type: 3}
+  distanceThreshold: 0.6
+  fastSlope: 50
+  grabForce: 75
 --- !u!1001 &645438312
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -548,6 +567,33 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2.6434627, y: 0.9612326, z: 1.1944232}
   m_Center: {x: -0.000004529953, y: 0.000002592802, z: -0.0000013113022}
+--- !u!54 &909752671
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 909752663}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 1
+  m_AngularDrag: 1
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1001 &953304019
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -950,6 +996,33 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2.6434627, y: 0.9612326, z: 1.1944232}
   m_Center: {x: -0.000004529953, y: 0.000002592802, z: -0.0000013113022}
+--- !u!54 &1535407675
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1535407667}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 1
+  m_AngularDrag: 1
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1 &2007922082
 GameObject:
   m_ObjectHideFlags: 0
@@ -989,6 +1062,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2015619173235420725, guid: f11df41e8322543488f992f498ffe4a2, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.1057
+      objectReference: {fileID: 0}
+    - target: {fileID: 3093397964158004769, guid: f11df41e8322543488f992f498ffe4a2, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3935484372405410763, guid: f11df41e8322543488f992f498ffe4a2, type: 3}
       propertyPath: m_Name
       value: Tent-24Width-FBX
@@ -1040,9 +1121,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7021513651947225573, guid: f11df41e8322543488f992f498ffe4a2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1535407671}
+    - targetCorrespondingSourceObject: {fileID: 7021513651947225573, guid: f11df41e8322543488f992f498ffe4a2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1535407675}
     - targetCorrespondingSourceObject: {fileID: 1179934994964159187, guid: f11df41e8322543488f992f498ffe4a2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 909752667}
+    - targetCorrespondingSourceObject: {fileID: 1179934994964159187, guid: f11df41e8322543488f992f498ffe4a2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 909752671}
     - targetCorrespondingSourceObject: {fileID: 5985129939556646390, guid: f11df41e8322543488f992f498ffe4a2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1503808416}
