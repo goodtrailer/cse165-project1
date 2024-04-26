@@ -23,9 +23,6 @@ public class GoGoHandCollider : MonoBehaviour
 
     private void recomputeClosestIntersection()
     {
-        if (ClosestIntersection?.GetComponent<Outline>() is Outline oldOutline)
-            oldOutline.enabled = false;
-
         ClosestIntersection = null;
 
         float minDistance = float.PositiveInfinity;
@@ -38,8 +35,5 @@ public class GoGoHandCollider : MonoBehaviour
                 ClosestIntersection = c;
             }
         }
-
-        if (ClosestIntersection?.GetComponent<Outline>() is Outline outline)
-            outline.enabled = true;
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class GoGoHand : MonoBehaviour
 {
-    public OVRInput.Controller gogoController;
+    public OVRInput.Controller selectionController;
     public OVRInput.Controller rotateController;
 
     public float distanceThreshold = 1f;
@@ -21,22 +21,35 @@ public class GoGoHand : MonoBehaviour
     private GameObject secondaryVisual;
 
     private GoGoHandCollider controllerCollider;
+    private Outline controllerOutline;
+    private bool controllerHasLoaded = false;
 
     private Rigidbody currentRigidbody;
-    private Vector3 currentRigidbodyOffset;
+    private Outline currentOutline;
 
-    private Outline controllerOutline;
+    private RayVisual rayVisual;
+    private bool isUsingRay;
+    private Vector3 initialControllerPosition;
+    private Vector3 initialRigidbodyPosition;
 
-    private bool controllerHasLoaded = false;
+    // scale
+    private Vector3 initialAnchorPosition;
+    private Vector3 initialSecondaryAnchorPosition;
+    private bool isScaling;
+    private Vector3 initialScale;
+
+    private Vector3 initialCenterEyePosition;
 
     void Start()
     {
         centerEyeAnchor = GameObject.Find("CenterEyeAnchor");
-        controllerAnchor = GameObject.Find(gogoController == OVRInput.Controller.LTouch ? "LeftHandAnchor" : "RightHandAnchor");
-        secondaryAnchor = GameObject.Find(gogoController == OVRInput.Controller.LTouch ? "RightHandAnchor" : "LeftHandAnchor");
-        controllerVisual = GameObject.Find(gogoController == OVRInput.Controller.LTouch ? "LeftOVRRuntimeController" : "RightOVRRuntimeController");
-        secondaryVisual = GameObject.Find(gogoController == OVRInput.Controller.LTouch ? "RightOVRRuntimeController" : "LeftOVRRuntimeController");
+        controllerAnchor = GameObject.Find(selectionController == OVRInput.Controller.LTouch ? "LeftHandAnchor" : "RightHandAnchor");
+        secondaryAnchor = GameObject.Find(selectionController == OVRInput.Controller.LTouch ? "RightHandAnchor" : "LeftHandAnchor");
+        controllerVisual = GameObject.Find(selectionController == OVRInput.Controller.LTouch ? "LeftOVRRuntimeController" : "RightOVRRuntimeController");
+        secondaryVisual = GameObject.Find(selectionController == OVRInput.Controller.LTouch ? "RightOVRRuntimeController" : "LeftOVRRuntimeController");
         controllerCollider = controllerVisual.GetComponent<GoGoHandCollider>();
+
+        rayVisual = GetComponent<RayVisual>();
     }
 
     
@@ -55,21 +68,37 @@ public class GoGoHand : MonoBehaviour
             }
         }
 
+        if (OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger, selectionController))
+        {
+            rayVisual.IsShowing = true;
+            rayVisual.Color = Color.yellow;
+            isUsingRay = true;
+        }
+
+        if (OVRInput.GetUp(OVRInput.Button.PrimaryIndexTrigger, selectionController))
+        {
+            rayVisual.IsShowing = false;
+            isUsingRay = false;
+        }
+
         Vector3 localOffset = controllerAnchor.transform.localPosition - centerEyeAnchor.transform.localPosition;
         Vector3 localSecondaryOffset = secondaryAnchor.transform.localPosition - centerEyeAnchor.transform.localPosition;
         float distance = localOffset.magnitude;
 
-        if (distance > distanceThreshold)
+        if (!isUsingRay)
         {
-            localOffset += localOffset.normalized * fastSlope * (distance - distanceThreshold);
+            if (distance > distanceThreshold)
+            {
+                localOffset += localOffset.normalized * fastSlope * (distance - distanceThreshold);
 
-            if (controllerOutline != null)
-                controllerOutline.enabled = true;
-        }
-        else
-        {
-            if (controllerOutline != null)
-                controllerOutline.enabled = false;
+                if (controllerOutline != null)
+                    controllerOutline.enabled = true;
+            }
+            else
+            {
+                if (controllerOutline != null)
+                    controllerOutline.enabled = false;
+            }
         }
 
         controllerVisual.transform.localPosition = centerEyeAnchor.transform.localPosition + localOffset;
@@ -80,20 +109,93 @@ public class GoGoHand : MonoBehaviour
         secondaryVisual.transform.localRotation = secondaryAnchor.transform.localRotation;
         secondaryVisual.transform.Rotate(-60f * Vector3.right, Space.Self);
 
-        if (OVRInput.GetDown(OVRInput.Button.PrimaryHandTrigger, gogoController))
+        // Selection
+
+        if (OVRInput.GetDown(OVRInput.Button.PrimaryHandTrigger, selectionController))
         {
-            currentRigidbody = controllerCollider.ClosestIntersection?.GetComponent<Rigidbody>();
+
+            initialControllerPosition = controllerVisual.transform.position;
+            initialCenterEyePosition = centerEyeAnchor.transform.position;
+
+            if (isUsingRay)
+            {
+                currentRigidbody = rayVisual.Info.collider?.GetComponent<Rigidbody>();
+
+                if (currentRigidbody != null)
+                    rayVisual.IsShowing = false;
+            }
+            else
+            {
+                currentRigidbody = controllerCollider.ClosestIntersection?.GetComponent<Rigidbody>();
+            }
+
             if (currentRigidbody != null)
             {
                 currentRigidbody.freezeRotation = true;
-                currentRigidbodyOffset = currentRigidbody.transform.position - controllerCollider.transform.position;
+                initialRigidbodyPosition = currentRigidbody.position;
+
+                // Outline on select
+
+                if (currentOutline != null)
+                    currentOutline.enabled = false;
+                currentOutline = null;
+                if (currentRigidbody.GetComponent<Outline>() is Outline outline)
+                {
+                    outline.enabled = true;
+                    outline.OutlineColor = Color.yellow;
+                }
             }
         }
 
-        if (OVRInput.GetUp(OVRInput.Button.PrimaryHandTrigger, gogoController) && currentRigidbody != null)
+        if (OVRInput.GetUp(OVRInput.Button.PrimaryHandTrigger, selectionController) && currentRigidbody != null)
         {
+            // Un-outline on deselect
+
+            if (currentRigidbody?.GetComponent<Outline>() is Outline outline)
+                outline.enabled = false;
+
+            if (isUsingRay)
+                rayVisual.IsShowing = true;
+
             currentRigidbody.freezeRotation = false;
             currentRigidbody = null;
+
+        }
+
+        // scale stuff
+
+        if (OVRInput.GetDown(OVRInput.Button.PrimaryHandTrigger, rotateController) && currentRigidbody != null)
+        {
+            initialAnchorPosition = controllerAnchor.transform.position;
+            initialSecondaryAnchorPosition = secondaryAnchor.transform.position;
+            isScaling = true;
+
+            initialScale = currentRigidbody.transform.localScale;
+        }
+
+        if (OVRInput.GetUp(OVRInput.Button.PrimaryHandTrigger, rotateController))
+        {
+            isScaling = false;
+        }
+
+
+        // Outline on hover
+
+        if (currentRigidbody == null)
+        {
+            if (currentOutline != null)
+                currentOutline.enabled = false;
+
+            currentOutline = isUsingRay
+                ? rayVisual.Info.collider?.GetComponent<Outline>()
+                : controllerCollider.ClosestIntersection?.GetComponent<Outline>();
+
+            if (currentOutline != null)
+            {
+                currentOutline.enabled = true;
+                currentOutline.OutlineColor = new Color(0f, 0.8703723f, 1f, 1f);
+                currentOutline.UpdateMaterialProperties();
+            }
         }
     }
 
@@ -101,35 +203,41 @@ public class GoGoHand : MonoBehaviour
     {
         if (currentRigidbody != null)
         {
-            Vector3 target = controllerVisual.transform.position + currentRigidbodyOffset;
-            Vector3 dir = target - currentRigidbody.transform.position;
-            if (false && dir.magnitude > 0.2f)
+
+            Vector3 target = isUsingRay
+                ? 10 * (controllerVisual.transform.position - initialControllerPosition - centerEyeAnchor.transform.position + initialCenterEyePosition) + centerEyeAnchor.transform.position - initialCenterEyePosition + initialRigidbodyPosition
+                : controllerVisual.transform.position - initialControllerPosition + initialRigidbodyPosition;
+            currentRigidbody.MovePosition(target);
+
+            // scale
+            if (isScaling)
             {
-                currentRigidbody.AddForce(-2f * currentRigidbody.velocity);
-                currentRigidbody.AddForce(grabForce * dir.normalized);
+                float initDist = (initialAnchorPosition - initialSecondaryAnchorPosition).magnitude;
+                float newDist = (controllerAnchor.transform.position - secondaryAnchor.transform.position).magnitude;
+                float scaleMag = newDist / initDist;
+
+                currentRigidbody.transform.localScale = scaleMag * initialScale;
             }
-            else
-            {
-                currentRigidbody.MovePosition(target);
-            }
+
 
 
             // rotation
 
-            Vector2 rotateInput = OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick, rotateController);
-            Quaternion rotation;
-            rotateInput *= Time.fixedDeltaTime * rotateSpeed;
-            if (Mathf.Abs(rotateInput.x) > Mathf.Abs(rotateInput.y))
-            {
-                rotation = Quaternion.AngleAxis(-rotateInput.x, Vector3.up);
-            }
-            else
-            {
-                rotation = Quaternion.AngleAxis(rotateInput.y,
-                                                centerEyeAnchor.transform.localToWorldMatrix * Vector3.right);
-            }
-            currentRigidbody.MoveRotation(rotation * currentRigidbody.rotation);
 
+
+            //Vector2 rotateInput = OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick, rotateController);
+            //Quaternion rotation;
+            //rotateInput *= Time.fixedDeltaTime * rotateSpeed;
+            //if (Mathf.Abs(rotateInput.x) > Mathf.Abs(rotateInput.y))
+            //{
+            //    rotation = Quaternion.AngleAxis(-rotateInput.x, Vector3.up);
+            //}
+            //else
+            //{
+            //    rotation = Quaternion.AngleAxis(rotateInput.y,
+            //                                    centerEyeAnchor.transform.localToWorldMatrix * Vector3.right);
+            //}
+            //currentRigidbody.MoveRotation(rotation * currentRigidbody.rotation);
         }
     }
 }
