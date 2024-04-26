@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GoGoHand : MonoBehaviour
+public class Manipulation : MonoBehaviour
 {
     public OVRInput.Controller selectionController;
     public OVRInput.Controller rotateController;
@@ -25,7 +25,7 @@ public class GoGoHand : MonoBehaviour
     private bool controllerHasLoaded = false;
 
     private Rigidbody currentRigidbody;
-    private Outline currentOutline;
+    private Manipulatable currentManipulatable;
 
     private RayVisual rayVisual;
     private bool isUsingRay;
@@ -39,6 +39,12 @@ public class GoGoHand : MonoBehaviour
     private Vector3 initialScale;
 
     private Vector3 initialCenterEyePosition;
+
+    // rotate
+    private bool isRotating;
+    private Quaternion initialRigidBodyRotation;
+    private Quaternion initialSecondaryAnchorRotation;
+
 
     void Start()
     {
@@ -109,6 +115,23 @@ public class GoGoHand : MonoBehaviour
         secondaryVisual.transform.localRotation = secondaryAnchor.transform.localRotation;
         secondaryVisual.transform.Rotate(-60f * Vector3.right, Space.Self);
 
+        // Hover
+
+        if (currentRigidbody == null)
+        {
+            Manipulatable previousManipulatable = currentManipulatable;
+
+            currentManipulatable = isUsingRay
+                ? rayVisual.Info.collider?.GetComponent<Manipulatable>()
+                : controllerCollider.ClosestIntersection?.GetComponent<Manipulatable>();
+
+            if (currentManipulatable != previousManipulatable)
+            {
+                previousManipulatable?.Unhover();
+                currentManipulatable?.Hover();
+            }
+        }
+
         // Selection
 
         if (OVRInput.GetDown(OVRInput.Button.PrimaryHandTrigger, selectionController))
@@ -119,7 +142,7 @@ public class GoGoHand : MonoBehaviour
 
             if (isUsingRay)
             {
-                currentRigidbody = rayVisual.Info.collider?.GetComponent<Rigidbody>();
+                currentRigidbody = currentManipulatable.GetComponent<Rigidbody>();
 
                 if (currentRigidbody != null)
                     rayVisual.IsShowing = false;
@@ -133,33 +156,19 @@ public class GoGoHand : MonoBehaviour
             {
                 currentRigidbody.freezeRotation = true;
                 initialRigidbodyPosition = currentRigidbody.position;
-
-                // Outline on select
-
-                if (currentOutline != null)
-                    currentOutline.enabled = false;
-                currentOutline = null;
-                if (currentRigidbody.GetComponent<Outline>() is Outline outline)
-                {
-                    outline.enabled = true;
-                    outline.OutlineColor = Color.yellow;
-                }
+                currentManipulatable.Select();
             }
         }
 
         if (OVRInput.GetUp(OVRInput.Button.PrimaryHandTrigger, selectionController) && currentRigidbody != null)
         {
-            // Un-outline on deselect
-
-            if (currentRigidbody?.GetComponent<Outline>() is Outline outline)
-                outline.enabled = false;
-
             if (isUsingRay)
                 rayVisual.IsShowing = true;
 
             currentRigidbody.freezeRotation = false;
             currentRigidbody = null;
 
+            currentManipulatable.Unselect();
         }
 
         // scale stuff
@@ -178,24 +187,19 @@ public class GoGoHand : MonoBehaviour
             isScaling = false;
         }
 
+        // rotation stuff
 
-        // Outline on hover
-
-        if (currentRigidbody == null)
+        if (OVRInput.GetDown(OVRInput.Button.PrimaryIndexTrigger, rotateController) && currentRigidbody != null)
         {
-            if (currentOutline != null)
-                currentOutline.enabled = false;
+            initialRigidBodyRotation = currentRigidbody.transform.rotation;
+            initialSecondaryAnchorRotation = secondaryAnchor.transform.rotation;
+            isRotating = true;
 
-            currentOutline = isUsingRay
-                ? rayVisual.Info.collider?.GetComponent<Outline>()
-                : controllerCollider.ClosestIntersection?.GetComponent<Outline>();
+        }
 
-            if (currentOutline != null)
-            {
-                currentOutline.enabled = true;
-                currentOutline.OutlineColor = new Color(0f, 0.8703723f, 1f, 1f);
-                currentOutline.UpdateMaterialProperties();
-            }
+        if (OVRInput.GetUp(OVRInput.Button.PrimaryIndexTrigger, rotateController))
+        {
+            isRotating = false;
         }
     }
 
@@ -222,6 +226,12 @@ public class GoGoHand : MonoBehaviour
 
 
             // rotation
+
+            if (isRotating)
+            {
+                Quaternion rotation = secondaryAnchor.transform.rotation * Quaternion.Inverse(initialSecondaryAnchorRotation);
+                currentRigidbody.MoveRotation(rotation * initialRigidBodyRotation);
+            }
 
 
 

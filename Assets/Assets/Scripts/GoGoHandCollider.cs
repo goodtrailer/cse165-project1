@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class GoGoHandCollider : MonoBehaviour
@@ -28,6 +29,12 @@ public class GoGoHandCollider : MonoBehaviour
         float minDistance = float.PositiveInfinity;
         foreach (Collider c in intersections)
         {
+            if (c.IsDestroyed())
+            {
+                intersections.Remove(c);
+                continue;
+            }
+
             float distance = (c.transform.position - transform.position).magnitude;
             if (distance < minDistance)
             {
